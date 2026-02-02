@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>IoT Control Panel</title>
+    <style>
+        .status { padding: 10px; margin: 10px; border-radius: 5px; }
+        .online { background-color: #d4edda; color: #155724; }
+        .offline { background-color: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <h1>Comando e Controllo Device</h1>
+
+    <div id="connectionStatus" class="status offline">Stato: Disconnesso</div>
+    <div id="deviceState">Stato Dispositivo: Sconosciuto...</div>
+
+    <button onclick="sendRestCommand('on')">Accendi</button>
+    <button onclick="sendRestCommand('off')">Spegni</button>
+
+    <script>
+        // Su Azure Container Apps, l'URL sarà tipo: wss://tuo-backend.azurecontainerapps.io/ws
+        const WS_URL = "ws://192.168.1.12:8000/ws";
+        let socket;
+
+        function connect() {
+            socket = new WebSocket(WS_URL);
+
+            socket.onopen = () => {
+                document.getElementById('connectionStatus').innerText = "Stato: Connesso";
+                document.getElementById('connectionStatus').className = "status online";
+                console.log("Connessione WebSocket stabilita.");
+            };
+
+            socket.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                console.log("Messaggio dal server:", data);
+                // Aggiorna la UI con lo stato ricevuto dal device via MQTT
+                document.getElementById('deviceState').innerText = `Stato Dispositivo: ${data.state}`;
+            };
+
+            socket.onclose = () => {
+                document.getElementById('connectionStatus').innerText = "Stato: Disconnesso (Riconnessione...)";
+                document.getElementById('connectionStatus').className = "status offline";
+                setTimeout(connect, 3000); // Tentativo di riconnessione automatica
+            };
+
+            socket.onerror = (error) => {
+                console.error("Errore WebSocket:", error);
+            };
+        }
+
+        function sendCommand(action) {
+            // Possiamo inviare il comando via WebSocket...
+            if (socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({ "command": action }));
+            }
+            // ...oppure via REST (POST) come da tua architettura
+            /*
+            fetch('/api/command', {
+                method: 'POST',
+                body: JSON.stringify({ action: action })
+            });
+            */
+        }
+
+        function sendRestCommand(action) {
+            const REST_URL = "http://192.168.1.12:8000";
+            console.log("sendRestCommand:", action);
+            body_str = JSON.stringify({ command: action })
+            console.log("command:", body_str);
+            fetch(REST_URL + '/api/command', {
+                headers: {
+                    "Content-Type": "application/json", // FONDAMENTALE
+                },
+                method: 'PUT',
+                body: body_str
+            });
+        }
+
+        // Avvia la connessione
+        connect();
+    </script>
+</body>
+</html>
