@@ -1,0 +1,4 @@
+fastapi
+aiomqtt
+uvicorn
+websockets
