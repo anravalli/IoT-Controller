@@ -1,5 +1,5 @@
 # 1. Base image leggera
-FROM python:3.12-slim
+FROM python:3.13-slim
 
 # 2. Impedisce a Python di generare file .pyc e forza il flush dei log
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -12,7 +12,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # 4. Copia del codice sorgente
-COPY . .
+COPY ./iot-controller-be.py .
 
 # 5. Non eseguiamo come root (Best practice di sicurezza per Azure)
 RUN adduser --disabled-password --gecos "" appuser && chown -R appuser /app
@@ -22,4 +22,4 @@ USER appuser
 EXPOSE 8000
 
 # 7. Avvio con Uvicorn (standard per FastAPI)
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "iot-controller-be:app", "--host", "0.0.0.0", "--port", "8000"]
