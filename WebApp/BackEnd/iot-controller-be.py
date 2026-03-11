@@ -13,6 +13,7 @@ COMMAND_TOPIC = "iot/command/led"
 STATUS_TOPIC = "iot/status/led"
 
 origins = [
+    "https://thankful-stone-0131f1503.2.azurestaticapps.net"
     "http://localhost:8080",
     "http://192.168.1.8:8080",
     "http://192.168.1.12:8080",
