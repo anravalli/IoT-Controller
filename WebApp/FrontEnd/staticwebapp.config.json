@@ -1,0 +1,14 @@
+{
+  "navigationFallback": {
+    "rewrite": "/iot-controller-classic.html",
+    "exclude": ["/api/*", "/socket.io/*", "/ws/*"]
+  },
+  "routes": [
+    {
+      "route": "/api/*",
+      "rewrite": "https://iot-controller-cxcbcrgqgse5dfc0.italynorth-01.azurewebsites.net/api/*",
+      "methods": ["GET", "POST", "PUT"],
+      "allowedRoles": ["anonymous"]
+    }
+  ]
+}

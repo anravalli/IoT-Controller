@@ -19,8 +19,12 @@
     <button onclick="sendRestCommand('off')">Spegni</button>
 
     <script>
-        // Su Azure Container Apps, l'URL sarà tipo: wss://tuo-backend.azurecontainerapps.io/ws
-        const WS_URL = "ws://192.168.1.12:8000/ws";
+        const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            ? 'http://192.168.1.12:8000/api'
+            : '/api';
+        const WS_URL =  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            ? "ws://192.168.1.12:8000/ws"
+            : "ws://iot-controller-cxcbcrgqgse5dfc0.italynorth-01.azurewebsites.net/ws"
         let socket;
 
         function connect() {
@@ -49,27 +53,18 @@
                 console.error("Errore WebSocket:", error);
             };
         }
-
+        //send command via WebSocket: UNUSED
         function sendCommand(action) {
-            // Possiamo inviare il comando via WebSocket...
             if (socket.readyState === WebSocket.OPEN) {
                 socket.send(JSON.stringify({ "command": action }));
             }
-            // ...oppure via REST (POST) come da tua architettura
-            /*
-            fetch('/api/command', {
-                method: 'POST',
-                body: JSON.stringify({ action: action })
-            });
-            */
         }
 
         function sendRestCommand(action) {
-            const REST_URL = "http://192.168.1.12:8000";
             console.log("sendRestCommand:", action);
             body_str = JSON.stringify({ command: action })
             console.log("command:", body_str);
-            fetch(REST_URL + '/api/command', {
+            fetch(API_BASE_URL + '/command', {
                 headers: {
                     "Content-Type": "application/json", // FONDAMENTALE
                 },
