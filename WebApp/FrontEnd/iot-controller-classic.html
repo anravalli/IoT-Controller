@@ -24,7 +24,7 @@
             : '/api';
         const WS_URL =  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
             ? "ws://192.168.1.12:8000/ws"
-            : "ws://iot-controller-cxcbcrgqgse5dfc0.italynorth-01.azurewebsites.net/ws"
+            : "wss://iot-controller-cxcbcrgqgse5dfc0.italynorth-01.azurewebsites.net/ws"
         let socket;
 
         function connect() {
