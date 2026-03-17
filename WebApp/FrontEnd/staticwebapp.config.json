@@ -6,8 +6,8 @@
   "routes": [
     {
       "route": "/api/*",
-      "rewrite": "https://iot-controller-cxcbcrgqgse5dfc0.italynorth-01.azurewebsites.net:8000/api/*",
-      "methods": ["GET", "POST", "PUT"],
+      "rewrite": "https://iot-controller-cxcbcrgqgse5dfc0.italynorth-01.azurewebsites.net/api/*",
+      "methods": ["GET", "POST", "PUT", "OPTION"],
       "allowedRoles": ["anonymous"]
     }
   ]
