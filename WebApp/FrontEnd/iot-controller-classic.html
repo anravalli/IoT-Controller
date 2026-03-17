@@ -7,22 +7,30 @@
         .status { padding: 10px; margin: 10px; border-radius: 5px; }
         .online { background-color: #d4edda; color: #155724; }
         .offline { background-color: #f8d7da; color: #721c24; }
+        .running { background-color: #6986b9;}
     </style>
 </head>
 <body>
-    <h1>Comando e Controllo Device</h1>
+    <h1>Pannello di Controllo PiFirst</h1>
 
-    <div id="connectionStatus" class="status offline">Stato: Disconnesso</div>
-    <div id="deviceState">Stato Dispositivo: Sconosciuto...</div>
-
-    <button onclick="sendRestCommand('on')">Accendi</button>
-    <button onclick="sendRestCommand('off')">Spegni</button>
-
+    <div id="application" class="status">
+        <div id="status" class="status offline">
+            <div id="connectionStatus" class="status">Stato: Disconnesso</div>
+            <div id="deviceBox" class="status">
+                <p id="deviceStatus">Stato Dispositivo: Sconosciuto...</p>
+                <p id="deviceUpdate">ultimo aggiornamento: ...</p>
+            </div>
+        </div>
+        <div id="controls" class="status">
+            <button onclick="sendRestCommand('on')">Accendi</button>
+            <button onclick="sendRestCommand('off')">Spegni</button>
+        <div>
+    </div>
     <script>
-        const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname === '192.168.1.12'
             ? 'http://192.168.1.12:8000/api'
             : '/api';
-        const WS_URL =  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        const WS_URL =  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname === '192.168.1.12'
             ? "ws://192.168.1.12:8000/ws"
             : "wss://iot-controller-cxcbcrgqgse5dfc0.italynorth-01.azurewebsites.net/ws"
         let socket;
@@ -33,19 +41,21 @@
             socket.onopen = () => {
                 document.getElementById('connectionStatus').innerText = "Stato: Connesso";
                 document.getElementById('connectionStatus').className = "status online";
+                document.getElementById('status').className = "status running"
                 console.log("Connessione WebSocket stabilita.");
             };
 
             socket.onmessage = (event) => {
                 const data = JSON.parse(event.data);
                 console.log("Messaggio dal server:", data);
-                // Aggiorna la UI con lo stato ricevuto dal device via MQTT
-                document.getElementById('deviceState').innerText = `Stato Dispositivo: ${data.state}`;
+                updateStatus(data)
             };
 
             socket.onclose = () => {
                 document.getElementById('connectionStatus').innerText = "Stato: Disconnesso (Riconnessione...)";
                 document.getElementById('connectionStatus').className = "status offline";
+                document.getElementById('deviceBox').className = "status offline"
+                document.getElementById('status').className = "status offline";
                 setTimeout(connect, 3000); // Tentativo di riconnessione automatica
             };
 
@@ -71,6 +81,17 @@
                 method: 'PUT',
                 body: body_str
             });
+        }
+
+	function updateStatus(status) {
+            console.log("Dati aggiornati:", status);
+
+            const date = new Date(status.timestamp * 1000);
+            console.log(`---> time stamp: ${date.toLocaleString()}`);
+
+            document.getElementById('deviceStatus').innerText = `Stato Dispositivo: ${status.status}`
+            document.getElementById('deviceUpdate').innerText = `ultimo aggiornamento: ${date.toLocaleString()}`;
+            document.getElementById('deviceBox').className = "status online"
         }
 
         // Avvia la connessione

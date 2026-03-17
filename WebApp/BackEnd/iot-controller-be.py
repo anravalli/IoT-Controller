@@ -3,6 +3,8 @@ import json
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from aiomqtt import Client, MqttError
+import time
+from pydantic import BaseModel
 
 app = FastAPI()
 
@@ -28,6 +30,12 @@ app.add_middleware(
     allow_headers=["*"],             # Permette tutti gli header (es. Content-Type, Authorization)
 )
 
+class DeviceStatus(BaseModel):
+    status: str = "unknown",
+    updated_on: int = 0
+
+device_status = DeviceStatus()
+
 # 1. Gestore delle connessioni WebSocket
 class ConnectionManager:
     def __init__(self):
@@ -36,6 +44,7 @@ class ConnectionManager:
     async def connect(self, websocket: WebSocket):
         await websocket.accept()
         self.active_connections.append(websocket)
+        await updateClients()
 
     def disconnect(self, websocket: WebSocket):
         self.active_connections.remove(websocket)
@@ -48,18 +57,27 @@ manager = ConnectionManager()
 
 # 2. Task in background per ascoltare MQTT
 async def mqtt_listen():
-    """Ascolta i messaggi dal dispositivo e li invia ai WebSocket"""
+    global device_status
     try:
         async with Client(MQTT_HOST, port=MQTT_PORT) as client:
             await client.subscribe(STATUS_TOPIC)
             async for message in client.messages:
                 payload = message.payload.decode()
                 # Inviamo lo stato del device a TUTTI i frontend connessi
-                await manager.broadcast(json.dumps({"state": payload}))
+                device_status.status = payload
+                device_status.updated_on = time.time()
+                await updateClients()
     except MqttError:
         print("Errore di connessione MQTT. Riprovo tra 5 secondi...")
         await asyncio.sleep(5)
         await mqtt_listen()
+
+async def updateClients():
+    update = {
+        "status": device_status.status,
+        "timestamp": device_status.updated_on
+        }
+    await manager.broadcast(json.dumps(update))
 
 # Avvia il task MQTT all'avvio di FastAPI
 @app.on_event("startup")
